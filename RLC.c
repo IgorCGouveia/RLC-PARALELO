@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <math.h>
 
-#define m = pow(10, -3);
-#define Mi =  pow(10, -6);
-#define k =  pow(10, 3);
-#define Me = pow(10, 6);
+#define m  pow(10, -3);
+#define Mi  pow(10, -6);
+#define k  pow(10, 3);
+#define Me  pow(10, 6);
 
 double converter_unidade(double valor, char unidade) {
     switch (unidade) {
@@ -21,12 +21,13 @@ double converter_unidade(double valor, char unidade) {
     }}
 //Função para calcular circuito superarmortecido(sigma > omega)
 void calc_superamortecido(double R, double L, double C ,  double VC0 , double IL0, double sigma, double omega){
+
     //calcular s1 e s2
-   double s1= -sigma + sqrt(pow(sigma, 2) - pow(omega, 2));
-   double s2= -sigma - sqrt(pow(sigma, 2) - pow(omega, 2));
+   double s1 = -sigma + sqrt(pow(sigma, 2) - pow(omega, 2));
+   double s2 = -sigma - sqrt(pow(sigma, 2) - pow(omega, 2));
    
    double Corrente_R0 = VC0 / R;
-   double corrente_C0 = -IL0 - Corrente_R0;
+   double corrente_C0 = IL0 - Corrente_R0;
    double var = corrente_C0  / C;
 
   
@@ -34,10 +35,10 @@ void calc_superamortecido(double R, double L, double C ,  double VC0 , double IL
     double A1 = (var - VC0*s2)/(s1 - s2);
     double A2 = VC0 - A1;
     
-    double tm = (log(fabs(s1*A2)) - log(fabs(s2*A1)))/(s2 - s1);
+    double tm = (log(fabs(s1*A1)) - log(fabs(s2*A2)))/(s2 - s1);
     double vtm = A1 * exp(s1 * tm) + A2 * exp(s2 * tm);
-    printf(" Valor de A1 = %.2f \n Valor de A2 = %.2f\n sigma = %.2f(s^-1)\n omega = %.2f(rad/s)\n s1 = %.2f\n s2 = %.2f\n",A1,A2,sigma,omega,s1,s2);
-    printf("tm= %.2f(seg)\n VTM = %.2f(V)\n", tm, vtm);
+    printf(" Valor de A1 = %.3f \n Valor de A2 = %.3f\n sigma = %.3f(s^-1)\n omega = %.3f(rad/s)\n s1 = %.3f\n s2 = %.3f\n",A1,A2,sigma,omega,s1,s2);
+    printf("tm= %.10lf(seg)\n VTM = %.10lf(V)\n", tm, vtm);
 }
 
 
@@ -59,7 +60,7 @@ void calc_criticamente(double R, double L, double C ,  double VC0 , double IL0,d
     double tm = -(A2 + A1 * s1) / (A2 * s1);
     double vtm = (A1 + A2 * tm) * exp(s1 * tm);
 
-    printf("Valor de A1 = %.2f \nValor de A2 = %.2f\nSigma = %.2f(s^-1)\nOmega = %.2f(rad/s)\ns1 = %.2f\nTempo tm (tensão máxima) = %.2f(seg)\nVtm = %.2f(V)\n", A1, A2, sigma, omega, s1, tm , vtm);
+    printf("Valor de A1 = %.3f \nValor de A2 = %.3f\nSigma = %.3f(s^-1)\nOmega = %.3f(rad/s)\ns1 = %.3f\nTempo tm (tensão máxima) = %.10lf(seg)\nVtm = %.10lf(V)\n", A1, A2, sigma, omega, s1, tm , vtm);
 }
 
 
@@ -82,7 +83,7 @@ void calc_subamortecido(double R, double L, double C, double VC0, double IL0,dou
     double tm = (atan((B2 * omegaD - B1 * sigma) / (B1 * omegaD + B2 * sigma)))/omegaD;
     double vtm = B1 * exp(-sigma * tm) * cos(omegaD * tm) + B2 * exp(-sigma * tm) * sin(omegaD * tm);
     
-    printf("Valor de B1 = %.2f \n Valor de B2 = %.2f\n sigma = %.2f(s^-1)\n omega = %.2f(rad/s)\nomegaD = %.2f(rad/s)\n tm = %.2f(seg)\nVtm = %.2f(V)\n", B1, B2, sigma, omega, omegaD, tm, vtm);
+    printf("Valor de B1 = %.3f \n Valor de B2 = %.3f\n sigma = %.3f(s^-1)\n omega = %.3f(rad/s)\nomegaD = %.3f(rad/s)\n tm = %.10lf(seg)\nVtm = %.10lf(V)\n", B1, B2, sigma, omega, omegaD, tm, vtm);
 }
 
 int main(){
@@ -128,18 +129,24 @@ int main(){
     L = converter_unidade(L, unidade_L);
     VC0 = converter_unidade(VC0, unidade_VC0);
     IL0 = converter_unidade(IL0, unidade_IL0);
-    
-    double sigma = 1 / (2 * R * C);
-    double omega = 1 / sqrt(L * C);
+
+    if (R <= 0 || L <= 0 || C <= 0) {
+    printf("Erro: Resistência, Indutância e Capacitância devem ser maiores que zero.\n");
+    return;
+}
+    double sigma = 0;
+    double omega = 0;
+    sigma = 1 / (2 * R * C);
+    omega = 1 / sqrt(L * C);
 
     if(sigma > omega){
         calc_superamortecido(R,L,C,VC0,IL0,sigma,omega);
-    } else if ( sigma == omega){
+    } else if ( fabs(sigma - omega) < 1e-6){
          calc_criticamente(R,L,C,VC0,IL0,sigma,omega);
     } else if (sigma < omega){
         calc_subamortecido(R,L,C,VC0,IL0,sigma,omega);
     }
     printf("Voce quer colocar outros valores?(1- sim/2- nao): ");
-    scanf("%i", &cont);
+    scanf("%d", &cont);
     }
 }
